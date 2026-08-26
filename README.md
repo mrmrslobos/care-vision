@@ -47,7 +47,7 @@ Copy `env.example` to `.env.local` and add your **Gemini API key** ([Google AI S
 cp env.example .env.local
 ```
 
-## What’s in this base
+## What's in this base
 
 | Area | Location |
 |------|----------|
@@ -76,7 +76,7 @@ Full plan: [docs/PLAN.md](./docs/PLAN.md) or `/docs/plan` in the running app.
 
 ## Data & privacy
 
-- Visits are stored in **your browser’s localStorage** on this MVP — not synced across devices yet.
+- Visits are stored in **your browser's localStorage** on this MVP — not synced across devices yet.
 - Avoid photographing faces, name badges, or full medication labels when possible.
 - Get consent per facility rules before taking photos.
 
