@@ -49,6 +49,36 @@ export interface VisitNote {
   id: string;
   body: string;
   createdAt: string;
+  source?: "text" | "voice";
+  audioPath?: string;
+}
+
+export interface CareCircle {
+  id: string;
+  name: string;
+  patientLabel: string;
+  inviteCode: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CircleMember {
+  id: string;
+  circleId: string;
+  userId: string;
+  role: "owner" | "member";
+  displayName: string;
+  joinedAt: string;
+}
+
+export interface VisitReminder {
+  id: string;
+  circleId: string;
+  userId: string;
+  title: string;
+  remindAt: string;
+  enabled: boolean;
+  createdAt: string;
 }
 
 export interface CareVisit {
