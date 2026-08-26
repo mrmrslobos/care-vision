@@ -59,7 +59,17 @@ export function PhotoCapture({
           },
         }),
       });
-      const data = await res.json();
+
+      const raw = await res.text();
+      let data: { analysis?: VisitPhoto["analysis"]; error?: string };
+      try {
+        data = JSON.parse(raw) as { analysis?: VisitPhoto["analysis"]; error?: string };
+      } catch {
+        throw new Error(
+          raw.slice(0, 120) || "Server returned an invalid response"
+        );
+      }
+
       if (!res.ok) {
         throw new Error(data.error ?? "Analysis failed");
       }
