@@ -6,7 +6,7 @@ import {
   defaultChecklistAnswers,
   CARE_CHECKLIST,
 } from "@/lib/care-checklist";
-import { createVisitId, saveVisit } from "@/lib/storage";
+import { createVisitId, saveVisit } from "@/lib/visits-repository";
 import type { CareVisit, ConcernLevel, VisitNote } from "@/types/care";
 import { CareChecklist } from "@/components/visits/care-checklist";
 import { PhotoCapture } from "@/components/visits/photo-capture";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { VoiceNoteCapture } from "@/components/visits/voice-note-capture";
 
 function deriveConcern(visit: Pick<CareVisit, "photos" | "mood">): ConcernLevel {
   const photoLevels = visit.photos
@@ -76,6 +77,7 @@ export function VisitForm({ existing }: { existing?: CareVisit }) {
         id: crypto.randomUUID(),
         body: noteBody.trim(),
         createdAt: new Date().toISOString(),
+        source: "text",
       });
     }
 
@@ -94,7 +96,7 @@ export function VisitForm({ existing }: { existing?: CareVisit }) {
     };
     draft.overallConcern = deriveConcern(draft);
 
-    saveVisit(draft);
+    await saveVisit(draft);
     router.push(`/visits/${draft.id}`);
     router.refresh();
   }
@@ -189,6 +191,11 @@ export function VisitForm({ existing }: { existing?: CareVisit }) {
         </TabsContent>
 
         <TabsContent value="notes" className="mt-4 space-y-4">
+          <VoiceNoteCapture
+            onTranscript={(text) =>
+              setNoteBody((prev) => (prev ? `${prev} ${text}` : text))
+            }
+          />
           <div className="space-y-2">
             <Label htmlFor="note">Visit notes</Label>
             <Textarea
