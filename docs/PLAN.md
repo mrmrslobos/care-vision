@@ -18,7 +18,7 @@ Give families a calm, structured way to document stroke-recovery visits so care 
 - Checklist completion rate
 - Photos with AI review vs manual-only
 - Exported summaries used in care meetings (qualitative)
-- Reduction in “I forgot to mention…” moments (qualitative)
+- Reduction in "I forgot to mention…" moments (qualitative)
 
 ## Stroke-specific checklist rationale
 
