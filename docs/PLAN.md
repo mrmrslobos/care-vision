@@ -66,7 +66,7 @@ Customize `src/lib/care-checklist.ts` with her care plan.
 
 ### Provider options
 
-- Current: Google Gemini vision (`gemini-2.0-flash`) via REST
+- Current: Google Gemini vision (`gemini-3.6-flash`) via REST
 - Future: Vercel AI SDK + AI Gateway for key management and model fallback
 
 ## Architecture (target)

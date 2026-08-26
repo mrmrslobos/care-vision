@@ -106,7 +106,7 @@ Without Supabase, visits stay on this device (localStorage).
    | Name | Value |
    |------|--------|
    | `GEMINI_API_KEY` | Your key from [Google AI Studio](https://aistudio.google.com/apikey) |
-   | `GEMINI_MODEL` | Optional — defaults to `gemini-2.0-flash` |
+   | `GEMINI_MODEL` | Optional — defaults to `gemini-3.6-flash` |
    | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon / publishable key |
 
