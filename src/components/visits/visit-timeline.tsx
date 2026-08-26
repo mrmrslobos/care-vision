@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listVisits } from "@/lib/storage";
+import { listVisits } from "@/lib/visits-repository";
 import { CARE_CHECKLIST } from "@/lib/care-checklist";
 import type { CareVisit } from "@/types/care";
 import { VisitSummaryCard } from "@/components/visits/visit-summary-card";
@@ -12,8 +12,10 @@ export function VisitTimeline() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setVisits(listVisits());
-    setReady(true);
+    listVisits().then((v) => {
+      setVisits(v);
+      setReady(true);
+    });
   }, []);
 
   if (!ready) {
