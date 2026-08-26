@@ -80,6 +80,22 @@ Full plan: [docs/PLAN.md](./docs/PLAN.md) or `/docs/plan` in the running app.
 - Avoid photographing faces, name badges, or full medication labels when possible.
 - Get consent per facility rules before taking photos.
 
+## Family sync (Phase 2)
+
+1. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` (or Vercel).
+2. Open **Family** → sign in with magic link.
+3. **Create** a care circle or **join** with an invite code.
+4. Everyone in the circle sees the same visit timeline.
+
+Without Supabase, visits stay on this device (localStorage).
+
+## Insights, PDF & reminders (Phases 3–4)
+
+- **Insights** — checklist trends, visit frequency, concern counts.
+- **Download PDF** — conference summary for nurses / care managers.
+- **Voice notes** — dictate in the Notes tab after a visit (Chrome).
+- **Reminders** — schedule visit reminders with browser notifications (when signed in).
+
 ## Deploy on Vercel
 
 1. Push this repo to GitHub (`mrmrslobos/care-vision`).
@@ -91,6 +107,8 @@ Full plan: [docs/PLAN.md](./docs/PLAN.md) or `/docs/plan` in the running app.
    |------|--------|
    | `GEMINI_API_KEY` | Your key from [Google AI Studio](https://aistudio.google.com/apikey) |
    | `GEMINI_MODEL` | Optional — defaults to `gemini-2.0-flash` |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon / publishable key |
 
 5. Deploy. The API route `/api/analyze-photo` runs as a Vercel Function.
 
