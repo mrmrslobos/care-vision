@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AppHeader } from "@/components/layout/app-header";
-import { getVisit } from "@/lib/storage";
+import { getVisit } from "@/lib/visits-repository";
 import { CARE_CHECKLIST } from "@/lib/care-checklist";
 import type { CareVisit } from "@/types/care";
 import {
@@ -22,8 +22,10 @@ export default function VisitDetailPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setVisit(getVisit(id) ?? null);
-    setReady(true);
+    getVisit(id).then((v) => {
+      setVisit(v ?? null);
+      setReady(true);
+    });
   }, [id]);
 
   if (!ready) {
