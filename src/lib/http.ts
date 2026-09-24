@@ -39,3 +39,15 @@ export async function fetchJson<T = unknown>(
 
 /** Resolves to the value, or null if the promise rejects. */
 export const settle = <T>(p: Promise<T>): Promise<T | null> => p.catch(() => null);
+
+const cache = new Map<string, { at: number; value: Promise<unknown> }>();
+
+/** Memoises an async result for `ttlMs`; failures are not cached. */
+export function cached<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.value as Promise<T>;
+  const value = fn();
+  cache.set(key, { at: Date.now(), value });
+  value.catch(() => cache.delete(key));
+  return value;
+}

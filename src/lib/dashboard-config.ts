@@ -11,6 +11,12 @@ const NAMES: Record<keyof typeof enabled, string> = {
   bookshelf: "Bookshelf",
   immich: "Immich",
   tdarr: "Tdarr",
+  homeassistant: "Home Assistant",
+  qbittorrent: "qBittorrent",
+  sabnzbd: "SABnzbd",
+  overseerr: "Requests",
+  tautulli: "Tautulli",
+  uptimekuma: "Uptime Kuma",
 };
 
 export function dashboardConfig(): DashboardConfig {
@@ -18,6 +24,8 @@ export function dashboardConfig(): DashboardConfig {
     title: config.title,
     host: HOST,
     demo: config.demo,
+    // In demo mode buttons are shown but the action route refuses them.
+    controls: { pinRequired: !!config.controlPin, sensitive: !!config.controlPin || config.demo },
     services: (Object.keys(NAMES) as (keyof typeof enabled)[]).map((id) => ({
       id,
       name: NAMES[id],

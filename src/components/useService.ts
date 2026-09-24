@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ServiceState<T> {
+  refresh?: () => void;
   data: T | null;
   error: string | null;
   notConfigured: boolean;
@@ -67,5 +68,5 @@ export function useService<T>(service: string, intervalMs: number): ServiceState
     };
   }, [load, intervalMs]);
 
-  return state;
+  return { ...state, refresh: load };
 }
