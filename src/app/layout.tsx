@@ -1,34 +1,22 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Care Visit Log",
-  description:
-    "Document stroke recovery visits with checklists, photos, notes, and optional AI review.",
+  title: "Unraid Dashboard",
+  description: "Home server dashboard for Unraid, AdGuard, Plex, the *arrs, Immich and Tdarr.",
 };
 
-import { AuthProvider } from "@/components/auth/auth-provider";
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0c0d10" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f3f0" },
+  ],
+};
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   );
 }

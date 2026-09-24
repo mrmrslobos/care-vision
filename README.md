@@ -1,121 +1,83 @@
-# Care Visit Log
+# Unraid Dashboard
 
-A private family app to document visits to a loved one recovering from a stroke — with a practical care checklist, photo capture, notes, and optional AI photo review.
+![Dashboard screenshot (demo data)](docs/screenshot.png)
 
-**This is not medical advice.** It helps you remember and advocate; always follow her clinicians and care facility policies.
+A good-looking, LAN-only home server dashboard for Unraid. One page shows:
 
-## Repositories
+- **Unraid**: CPU, memory, array usage, disk temperatures and usage, uptime, running containers
+- **AdGuard Home**: queries, block rate, response time, a 24-hour query chart, top blocked domains
+- **Plex**: recently added posters plus anything currently streaming
+- **Coming up**: one combined calendar for **Sonarr** (TV), **Radarr** (movies) and **Bookshelf** (books), which you can filter by source
+- **Immich**: photo and video counts, library size, storage, per-user usage
+- **Tdarr**: queue, processed, errors, space saved, live worker progress
 
-| Host | Location |
-|------|----------|
-| **GitHub** | https://github.com/mrmrslobos/care-vision |
-| **Cursor Origin** | https://cursor.com/codebase/open-itservices/care-vision |
+All API calls happen on the dashboard's server, so your API keys and Plex token never reach the browser. Posters go through the dashboard too. The page refreshes itself (Unraid every 10 s, AdGuard every 30 s, calendars every 5 min) and pauses when the tab is hidden. It works on phones and follows your light/dark system setting.
 
-Code is developed in Cursor Origin; push to GitHub when you want it on `mrmrslobos/care-vision`.
+---
 
-### Push to GitHub (WSL)
-
-If you cloned from Origin and added GitHub as a second remote:
-
-```bash
-git remote add github https://github.com/mrmrslobos/care-vision.git   # skip if already added
-git push -u github main
-```
-
-If GitHub rejects the push because the empty repo has an initial commit, use:
-
-```bash
-git push -u github main --force
-```
-
-(Only use `--force` on a new empty repo you just created.)
-
-## Quick start
+## Try it with sample data
 
 ```bash
 npm install
-npm run dev
+DEMO_MODE=true npm run dev     # http://localhost:3030
 ```
 
-Open [http://localhost:43125](http://localhost:43125).
+## Install on Unraid
 
-### Optional: enable AI photo analysis
-
-Copy `env.example` to `.env.local` and add your **Gemini API key** ([Google AI Studio](https://aistudio.google.com/apikey)). Without it, the app runs in offline preview mode and you can still use the full checklist and notes.
+### Option A: Docker Compose (needs the *Docker Compose Manager* plugin, or a terminal)
 
 ```bash
-cp env.example .env.local
+cd /mnt/user/appdata
+git clone https://github.com/mrmrslobos/care-vision.git unraid-dashboard
+cd unraid-dashboard
+cp .env.example .env
+nano .env                      # fill in your keys (see below)
+docker compose up -d --build
 ```
 
-## What’s in this base
+Then open **http://10.10.10.10:3030**.
 
-| Area | Location |
-|------|----------|
-| Types | `src/types/care.ts` |
-| Stroke-aware checklist | `src/lib/care-checklist.ts` |
-| Local storage (MVP) | `src/lib/storage.ts` |
-| AI analysis | `src/lib/ai/analyze-photo.ts` + `src/app/api/analyze-photo/route.ts` |
-| Visit UI | `src/components/visits/*` |
-| Product plan | `/docs/plan` in the app, details in `docs/PLAN.md` |
+To update later: `git pull && docker compose up -d --build`.
 
-## Typical visit workflow
+### Option B: pre-built image from GitHub
 
-1. **Log visit** — name, time, location, how she seemed.
-2. **Checklist** — safety, hydration, meds, mobility, skin, engagement.
-3. **Photos** — room, tray, equipment; tap **Analyze with AI** for suggestions.
-4. **Notes** — speech, appetite, questions for staff.
-5. **Timeline** — compare visits before the next care meeting.
+On every push to `main`, the included GitHub Action publishes `ghcr.io/mrmrslobos/care-vision:latest`. If the repository is private, open the package on GitHub and set it to **public** first, or run `docker login ghcr.io` on the server. Then in Unraid go to **Docker → Add Container**:
 
-## Roadmap (summary)
+| Field | Value |
+|---|---|
+| Repository | `ghcr.io/mrmrslobos/care-vision:latest` |
+| Network | `bridge` |
+| Port | container `3030` → host `3030` |
+| Variables | add each setting from `.env.example` you need, e.g. `SONARR_API_KEY` |
 
-1. **Now:** Local-only MVP, mobile camera, AI optional.
-2. **Next:** Family accounts, cloud sync, encrypted photos.
-3. **Then:** PDF export, trends, voice notes.
+## Where to find each key
 
-Full plan: [docs/PLAN.md](./docs/PLAN.md) or `/docs/plan` in the running app.
+| Service | Setting | Where |
+|---|---|---|
+| Unraid | `UNRAID_API_KEY` | Unraid 7.2+: **Settings → Management Access → API Keys → Create**, with the *viewer* role. Older 7.x versions need the **Unraid Connect** plugin, which adds the same page. |
+| AdGuard Home | `ADGUARD_USERNAME` / `ADGUARD_PASSWORD` | The login you use for the AdGuard web UI |
+| Plex | `PLEX_TOKEN` | In Plex Web, open any item, then **⋯ → Get Info → View XML**. The token is the `X-Plex-Token=` value in the URL. |
+| Sonarr / Radarr / Bookshelf | `*_API_KEY` | **Settings → General → Security → API Key** |
+| Immich | `IMMICH_API_KEY` | **Account Settings → API Keys → New API Key**. Give it `server.statistics` and `server.storage`, or *all*. Server statistics require an **admin** account's key. |
+| Tdarr | `TDARR_URL` | No key is needed unless you enabled auth in Tdarr, in which case set `TDARR_API_KEY` |
 
-## Data & privacy
+Each card appears only once its service is configured. Delete a service's lines to hide its card. If your apps don't use the default ports, change the `*_URL` values.
 
-- Visits are stored in **your browser’s localStorage** on this MVP — not synced across devices yet.
-- Avoid photographing faces, name badges, or full medication labels when possible.
-- Get consent per facility rules before taking photos.
+## Troubleshooting
 
-## Family sync (Phase 2)
+- **A card shows "unreachable":** the dashboard container can't reach that address. If the app runs on a custom network (`br0`, or anything with its own IP), enable **Settings → Docker → Host access to custom networks** (stop Docker to change it), or run the dashboard on the same network.
+- **"HTTP 401 — check the API key":** the key is wrong or doesn't have enough permissions.
+- **Unraid card fails but the others work:** make sure `UNRAID_URL` matches how you reach the web UI. If you use HTTPS with a self-signed certificate, add `NODE_TLS_REJECT_UNAUTHORIZED=0`.
+- **A card shows a "Stale" badge:** the last refresh failed, so it is showing the previous data. Hover over the badge to see why.
+- **Calendar days are off by one:** set `TZ` to your timezone.
 
-1. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` (or Vercel).
-2. Open **Family** → sign in with magic link.
-3. **Create** a care circle or **join** with an invite code.
-4. Everyone in the circle sees the same visit timeline.
+## Development
 
-Without Supabase, visits stay on this device (localStorage).
+```bash
+npm run dev        # http://localhost:3030
+npm run lint
+npm run typecheck
+npm run build
+```
 
-## Insights, PDF & reminders (Phases 3–4)
-
-- **Insights** — checklist trends, visit frequency, concern counts.
-- **Download PDF** — conference summary for nurses / care managers.
-- **Voice notes** — dictate in the Notes tab after a visit (Chrome).
-- **Reminders** — schedule visit reminders with browser notifications (when signed in).
-
-## Deploy on Vercel
-
-1. Push this repo to GitHub (`mrmrslobos/care-vision`).
-2. In [Vercel](https://vercel.com/new), **Import** the GitHub repository.
-3. Framework is auto-detected as **Next.js** — no extra build settings needed.
-4. Add **Environment Variables** (Production + Preview):
-
-   | Name | Value |
-   |------|--------|
-   | `GEMINI_API_KEY` | Your key from [Google AI Studio](https://aistudio.google.com/apikey) |
-   | `GEMINI_MODEL` | Optional — defaults to `gemini-3.6-flash` |
-   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon / publishable key |
-
-5. Deploy. The API route `/api/analyze-photo` runs as a Vercel Function.
-
-Photos are compressed client-side before upload to stay within serverless body limits.
-
-## Scripts
-
-- `npm run dev` — development server (port 43125)
-- `npm run build` — production build
-- `npm run start` — run production server
+Built with Next.js (App Router) and has no database. The integrations live in `src/lib/services/*`, and the cards in `src/components/cards/*`.
