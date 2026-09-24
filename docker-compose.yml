@@ -1,0 +1,9 @@
+services:
+  dashboard:
+    build: .
+    image: unraid-dashboard:latest
+    container_name: unraid-dashboard
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    env_file: .env
