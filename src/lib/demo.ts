@@ -3,7 +3,12 @@ import type {
   AdguardData,
   CalendarData,
   CalendarItem,
+  DownloadsData,
+  HomeAssistantData,
   ImmichData,
+  RequestsData,
+  TautulliData,
+  UptimeData,
   PlexData,
   TdarrData,
   UnraidData,
@@ -37,8 +42,38 @@ export const demo = {
       { name: "disk3", role: "data", status: "DISK_OK", temp: 36, size: 12 * TB, used: 6.5 * TB },
       { name: "cache", role: "cache", status: "DISK_OK", temp: 41, size: 2 * TB, used: 0.62 * TB },
     ],
-    containers: { running: 23, total: 25, stopped: ["handbrake", "makemkv"] },
+    containers: {
+      running: 23,
+      total: 25,
+      stopped: ["handbrake", "makemkv"],
+      list: [
+        "adguard", "bookshelf", "handbrake", "homeassistant", "immich", "immich-ml", "makemkv", "overseerr",
+        "plex", "postgres", "prowlarr", "qbittorrent", "radarr", "redis", "sabnzbd", "sonarr", "tautulli",
+        "tdarr", "tdarr-node", "unraid-dashboard", "uptime-kuma", "vaultwarden", "nginx-proxy", "cloudflared", "zigbee2mqtt",
+      ].map((name) => ({ id: name, name, running: name !== "handbrake" && name !== "makemkv" })),
+    },
     warnings: [],
+    history: Array.from({ length: 360 }, (_, i) => ({
+      t: Date.now() - (359 - i) * 10_000,
+      cpu: Math.max(2, 14 + 9 * Math.sin(i / 23) + (i > 250 && i < 290 ? 35 : 0) + Math.random() * 6),
+      mem: 44 + 3 * Math.sin(i / 60) + Math.random(),
+    })),
+    parity: { action: "Parity check", progress: 0.37, running: true },
+    ups: { name: "Back-UPS 1500", status: "ONLINE", charge: 100, runtimeSeconds: 2940, load: 22 },
+    vms: [
+      { name: "Home Assistant OS", state: "running" },
+      { name: "Windows 11", state: "shutoff" },
+    ],
+    notifications: {
+      unread: 3,
+      warnings: 1,
+      alerts: 0,
+      latest: [
+        { id: "n1", title: "Parity check started", subject: "Scheduled check", importance: "info", timestamp: day(0, 1) },
+        { id: "n2", title: "Disk 3 is warm", subject: "46 °C", importance: "warning", timestamp: day(-1, 16) },
+        { id: "n3", title: "Appdata backup complete", subject: null, importance: "info", timestamp: day(-1, 4) },
+      ],
+    },
   }),
 
   adguard: (): AdguardData => {
@@ -173,5 +208,164 @@ export const demo = {
       { id: "w1", node: "MainNode", type: "transcodegpu", file: "Dune Part Two (2024).mkv", percent: wobble(62, 20) },
       { id: "w2", node: "MainNode", type: "healthcheckcpu", file: "The Bear S03E04.mkv", percent: wobble(35, 30) },
     ],
+  }),
+
+  homeassistant: (): HomeAssistantData => {
+    const hours = 144;
+    const start = Date.now() - hours * 600_000;
+    const solar = Array.from({ length: hours }, (_, i) => {
+      const hour = new Date(start + i * 600_000).getHours() + new Date(start + i * 600_000).getMinutes() / 60;
+      return hour > 6.5 && hour < 18.5 ? Math.round(4200 * Math.sin(((hour - 6.5) / 12) * Math.PI) * (0.85 + Math.random() * 0.15)) : 0;
+    });
+    const home = solar.map((_, i) => Math.round(650 + 500 * Math.abs(Math.sin(i / 11)) + Math.random() * 250));
+    return {
+      garage: [{ id: "cover.garage_door", name: "Garage door", state: "closed", since: new Date(Date.now() - 3 * 3600_000).toISOString() }],
+      people: [
+        { id: "person.alex", name: "Alex", state: "home", picture: null, since: day(0, 17) },
+        { id: "person.sam", name: "Sam", state: "Work", picture: null, since: day(0, 8) },
+      ],
+      openings: [
+        { id: "binary_sensor.front_door", name: "Front door", kind: "door", open: false, since: day(0, 18) },
+        { id: "binary_sensor.back_door", name: "Back door", kind: "door", open: true, since: new Date(Date.now() - 12 * 60_000).toISOString() },
+        { id: "binary_sensor.office_window", name: "Office window", kind: "window", open: false, since: day(-1, 9) },
+      ],
+      locks: [
+        { id: "lock.front_door", name: "Front door", state: "locked" },
+        { id: "lock.side_gate", name: "Side gate", state: "unlocked" },
+      ],
+      controls: [
+        ["light.living_room", "Living room", true],
+        ["light.kitchen", "Kitchen", true],
+        ["light.bedroom", "Bedroom", false],
+        ["light.porch", "Porch", false],
+        ["switch.office_fan", "Office fan", false],
+        ["switch.pool_pump", "Pool pump", true],
+        ["scene.movie_night", "Movie night", false],
+        ["scene.good_night", "Good night", false],
+      ].map(([id, name, on]) => ({
+        id: id as string,
+        name: name as string,
+        domain: (id as string).split(".")[0],
+        state: on ? "on" : "off",
+        on: on as boolean,
+      })),
+      weather: {
+        name: "Home",
+        condition: "partlycloudy",
+        temperature: 22,
+        unit: "°C",
+        humidity: 58,
+        wind: 14,
+        windUnit: "km/h",
+        forecast: [
+          ["sunny", 24, 13, 0],
+          ["partlycloudy", 23, 14, 0],
+          ["rainy", 18, 12, 6],
+          ["pouring", 16, 11, 18],
+          ["cloudy", 19, 10, 1],
+          ["sunny", 22, 11, 0],
+        ].map(([condition, high, low, precip], i) => ({
+          date: day(i),
+          condition: condition as string,
+          high: high as number,
+          low: low as number,
+          precip: precip as number,
+        })),
+        sunrise: day(1, 6),
+        sunset: day(0, 18),
+      },
+      energy: {
+        unit: "W",
+        now: { solar: solar[hours - 1], grid: home[hours - 1] - solar[hours - 1], home: home[hours - 1], battery: 86 },
+        history: {
+          start: start + 600_000,
+          stepMs: 600_000,
+          solar,
+          home,
+          grid: home.map((h, i) => h - solar[i]),
+        },
+      },
+      cameras: [
+        { id: "camera.driveway", name: "Driveway", image: "" },
+        { id: "camera.back_yard", name: "Back yard", image: "" },
+      ],
+    };
+  },
+
+  downloads: (): DownloadsData => ({
+    queue: [
+      { id: "q1", source: "sonarr", title: "Severance", subtitle: "S03E01 · Hello, Ms. Cobel", progress: 0.72, status: "downloading", eta: "6m", size: 2.1 * GB, warning: null },
+      { id: "q2", source: "radarr", title: "Mickey 17", subtitle: "2025", progress: 0.31, status: "downloading", eta: "24m", size: 14.6 * GB, warning: null },
+      { id: "q3", source: "bookshelf", title: "Wind and Truth", subtitle: "Brandon Sanderson", progress: 1, status: "import pending", eta: null, size: 0.004 * GB, warning: "No files found are eligible for import" },
+      { id: "q4", source: "sonarr", title: "Slow Horses", subtitle: "S05E03 · Hello Goodbye", progress: 0, status: "queued", eta: null, size: 1.4 * GB, warning: null },
+    ],
+    clients: [
+      { id: "qbittorrent", name: "qBittorrent", ok: true, downBps: wobble(38, 10) * 1024 ** 2, upBps: 2.1 * 1024 ** 2, active: 3, paused: false },
+      { id: "sabnzbd", name: "SABnzbd", ok: true, downBps: wobble(61, 20) * 1024 ** 2, upBps: null, active: 1, paused: false },
+    ],
+    arrs: [
+      { source: "sonarr", ok: true, missing: 12, health: [] },
+      { source: "radarr", ok: true, missing: 4, health: [{ type: "warning", message: "Indexers unavailable due to failures for more than 6 hours: NZBgeek" }] },
+      { source: "bookshelf", ok: true, missing: 31, health: [] },
+    ],
+  }),
+
+  overseerr: (): RequestsData => ({
+    counts: { pending: 2, approved: 41, processing: 3, available: 118, total: 164 },
+    recent: [
+      ["The Brutalist", "2024", "movie", "pending", null, "Sam"],
+      ["Paradise", "2025", "tv", "pending", null, "Alex"],
+      ["Thunderbolts*", "2025", "movie", "approved", "Processing", "Sam"],
+      ["The Studio", "2025", "tv", "approved", "Available", "Alex"],
+      ["Sinners", "2025", "movie", "approved", "Available", "Alex"],
+    ].map(([title, year, type, status, mediaStatus, user], i) => ({
+      id: i + 1,
+      title: title as string,
+      year,
+      type: type as "movie" | "tv",
+      status: status as "pending" | "approved",
+      mediaStatus,
+      user,
+      createdAt: new Date(Date.now() - (i + 1) * 7 * 3600_000).toISOString(),
+      image: null,
+    })),
+  }),
+
+  tautulli: (): TautulliData => ({
+    days: 30,
+    streams: 1,
+    bandwidthKbps: 8400,
+    topUsers: [
+      { name: "Alex", plays: 142, hours: 118 },
+      { name: "Sam", plays: 96, hours: 74 },
+      { name: "Mum", plays: 31, hours: 22 },
+    ],
+    topMovies: [
+      { name: "Dune: Part Two", plays: 6 },
+      { name: "The Wild Robot", plays: 5 },
+      { name: "Flow", plays: 3 },
+    ],
+    topShows: [
+      { name: "Severance", plays: 19 },
+      { name: "The Bear", plays: 14 },
+      { name: "Slow Horses", plays: 11 },
+    ],
+  }),
+
+  uptimekuma: (): UptimeData => ({
+    title: "Homelab",
+    monitors: [
+      ["Plex", "Media"], ["Sonarr", "Media"], ["Radarr", "Media"], ["Overseerr", "Media"],
+      ["Home Assistant", "Home"], ["AdGuard DNS", "Network"], ["Immich", "Apps"], ["Vaultwarden", "Apps"],
+      ["Cloudflare tunnel", "Network"], ["Internet (1.1.1.1)", "Network"],
+    ].map(([name, group], i) => ({
+      id: i + 1,
+      name,
+      group,
+      status: i === 7 ? ("down" as const) : ("up" as const),
+      uptime24h: i === 7 ? 0.962 : 0.999 + Math.random() * 0.001,
+      ping: Math.round(8 + Math.random() * 40),
+      beats: Array.from({ length: 30 }, (_, b) => (i === 7 && b > 26 ? 0 : i === 3 && b === 12 ? 0 : 1)),
+    })),
   }),
 };

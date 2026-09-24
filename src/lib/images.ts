@@ -1,7 +1,7 @@
 // Posters are loaded through /api/img/<service> so API keys and Plex tokens
 // stay on the server. Only same-origin relative paths are accepted.
 
-export const IMAGE_SERVICES = ["plex", "sonarr", "radarr", "bookshelf"] as const;
+export const IMAGE_SERVICES = ["plex", "sonarr", "radarr", "bookshelf", "homeassistant"] as const;
 export type ImageService = (typeof IMAGE_SERVICES)[number];
 
 export const imageUrl = (service: ImageService, path: string) =>

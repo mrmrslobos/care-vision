@@ -20,6 +20,7 @@ export interface DashboardConfig {
   title: string;
   host: string;
   demo: boolean;
+  controls: { pinRequired: boolean; sensitive: boolean };
   services: ServiceInfo[];
 }
 
@@ -37,6 +38,12 @@ export interface UnraidDisk {
   used: number | null; // bytes
 }
 
+export interface UnraidContainer {
+  id: string;
+  name: string;
+  running: boolean;
+}
+
 export interface UnraidData {
   hostname: string | null;
   version: string | null;
@@ -45,8 +52,13 @@ export interface UnraidData {
   memory: Meter | null; // bytes
   array: { state: string | null; capacity: Meter | null }; // bytes
   disks: UnraidDisk[];
-  containers: { running: number; total: number; stopped: string[] } | null;
+  containers: { running: number; total: number; stopped: string[]; list: UnraidContainer[] } | null;
   warnings: string[];
+  history: { t: number; cpu: number | null; mem: number | null }[]; // last hour, sampled ~every 10s
+  parity: { action: string; progress: number; running: boolean } | null;
+  ups: { name: string; status: string | null; charge: number | null; runtimeSeconds: number | null; load: number | null } | null;
+  vms: { name: string; state: string }[] | null;
+  notifications: { unread: number; warnings: number; alerts: number; latest: { id: string; title: string; subject: string | null; importance: string; timestamp: string | null }[] } | null;
 }
 
 export interface AdguardData {
@@ -136,4 +148,89 @@ export interface TdarrData {
   savedGb: number | null;
   nodes: number;
   workers: TdarrWorker[];
+}
+
+// ---------- Home Assistant ----------
+
+export interface HaControl {
+  id: string;
+  name: string;
+  domain: string;
+  state: string;
+  on: boolean;
+}
+
+export interface HaWeather {
+  name: string;
+  condition: string;
+  temperature: number | null;
+  unit: string;
+  humidity: number | null;
+  wind: number | null;
+  windUnit: string;
+  forecast: { date: string; condition: string; high: number | null; low: number | null; precip: number | null }[];
+  sunrise: string | null;
+  sunset: string | null;
+}
+
+export interface HaEnergy {
+  unit: string;
+  now: { solar: number | null; grid: number | null; home: number | null; battery: number | null };
+  history: { start: number; stepMs: number; solar: (number | null)[]; home: (number | null)[]; grid: (number | null)[] };
+}
+
+export interface HomeAssistantData {
+  garage: { id: string; name: string; state: string; since: string }[];
+  people: { id: string; name: string; state: string; picture: string | null; since: string }[];
+  openings: { id: string; name: string; kind: string; open: boolean; since: string }[];
+  locks: { id: string; name: string; state: string }[];
+  controls: HaControl[];
+  weather: HaWeather | null;
+  energy: HaEnergy | null;
+  cameras: { id: string; name: string; image: string }[];
+}
+
+// ---------- Downloads & *arr health ----------
+
+export interface QueueItem {
+  id: string;
+  source: CalendarSource | "qbittorrent" | "sabnzbd";
+  title: string;
+  subtitle: string | null;
+  progress: number | null; // 0..1
+  status: string;
+  eta: string | null; // "12m", "2h 3m"
+  size: number | null; // bytes
+  warning: string | null;
+}
+
+export interface DownloadsData {
+  queue: QueueItem[];
+  clients: { id: "qbittorrent" | "sabnzbd"; name: string; ok: boolean; error?: string; downBps: number | null; upBps: number | null; active: number | null; paused: boolean }[];
+  arrs: { source: CalendarSource; ok: boolean; missing: number | null; health: { type: string; message: string }[] }[];
+}
+
+// ---------- Overseerr / Jellyseerr ----------
+
+export interface RequestsData {
+  counts: { pending: number; approved: number; processing: number; available: number; total: number };
+  recent: { id: number; title: string; year: string | null; type: "movie" | "tv"; status: "pending" | "approved" | "declined" | "unknown"; mediaStatus: string | null; user: string | null; createdAt: string; image: string | null }[];
+}
+
+// ---------- Tautulli ----------
+
+export interface TautulliData {
+  days: number;
+  streams: number;
+  bandwidthKbps: number | null;
+  topUsers: { name: string; plays: number; hours: number }[];
+  topMovies: { name: string; plays: number }[];
+  topShows: { name: string; plays: number }[];
+}
+
+// ---------- Uptime Kuma ----------
+
+export interface UptimeData {
+  title: string;
+  monitors: { id: number; name: string; group: string | null; status: "up" | "down" | "pending" | "maintenance" | "unknown"; uptime24h: number | null; ping: number | null; beats: number[] }[];
 }

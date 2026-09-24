@@ -7,6 +7,11 @@ import { getImmich } from "@/lib/services/immich";
 import { getPlex } from "@/lib/services/plex";
 import { getTdarr } from "@/lib/services/tdarr";
 import { getUnraid } from "@/lib/services/unraid";
+import { getDownloads } from "@/lib/services/downloads";
+import { getHomeAssistant } from "@/lib/services/homeassistant";
+import { getRequests } from "@/lib/services/overseerr";
+import { getTautulli } from "@/lib/services/tautulli";
+import { getUptime } from "@/lib/services/uptimekuma";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +22,14 @@ const handlers = {
   calendar: { get: getCalendar, on: () => enabled.sonarr || enabled.radarr || enabled.bookshelf },
   immich: { get: getImmich, on: () => enabled.immich },
   tdarr: { get: getTdarr, on: () => enabled.tdarr },
+  homeassistant: { get: getHomeAssistant, on: () => enabled.homeassistant },
+  downloads: {
+    get: getDownloads,
+    on: () => enabled.sonarr || enabled.radarr || enabled.bookshelf || enabled.qbittorrent || enabled.sabnzbd,
+  },
+  overseerr: { get: getRequests, on: () => enabled.overseerr },
+  tautulli: { get: getTautulli, on: () => enabled.tautulli },
+  uptimekuma: { get: getUptime, on: () => enabled.uptimekuma },
 } as const;
 
 type HandlerId = keyof typeof handlers;

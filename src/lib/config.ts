@@ -12,6 +12,12 @@ const stripSlash = (url: string) => url.replace(/\/+$/, "");
 
 export const HOST = env("SERVER_HOST") ?? "10.10.10.10";
 
+const list = (key: string) =>
+  (env(key) ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
 const url = (key: string, port: number | null) =>
   stripSlash(env(key) ?? `http://${HOST}${port ? `:${port}` : ""}`);
 
@@ -38,6 +44,35 @@ export const config = {
     apiKey: env("TDARR_API_KEY"),
     enabled: !!env("TDARR_URL") || !!env("TDARR_API_KEY"),
   },
+
+  homeassistant: {
+    url: url("HA_URL", 8123),
+    token: env("HA_TOKEN"),
+    controls: list("HA_CONTROLS"),
+    cameras: list("HA_CAMERAS"),
+    exclude: list("HA_EXCLUDE"),
+    weather: env("HA_WEATHER_ENTITY"),
+    energy: {
+      solar: env("HA_SOLAR_POWER"),
+      grid: env("HA_GRID_POWER"),
+      home: env("HA_HOME_POWER"),
+      battery: env("HA_BATTERY_LEVEL"),
+    },
+  },
+  qbittorrent: {
+    url: url("QBITTORRENT_URL", 8080),
+    username: env("QBITTORRENT_USERNAME"),
+    password: env("QBITTORRENT_PASSWORD"),
+    enabled: !!env("QBITTORRENT_URL"),
+  },
+  sabnzbd: { url: url("SABNZBD_URL", 8080), apiKey: env("SABNZBD_API_KEY") },
+  overseerr: { url: url("OVERSEERR_URL", 5055), apiKey: env("OVERSEERR_API_KEY") },
+  tautulli: { url: url("TAUTULLI_URL", 8181), apiKey: env("TAUTULLI_API_KEY") },
+  uptimekuma: { url: url("UPTIME_KUMA_URL", 3001), slug: env("UPTIME_KUMA_SLUG") },
+
+  // Guards buttons that change things. Sensitive actions (unlocking, the
+  // garage door, starting/stopping containers) are only offered when set.
+  controlPin: env("CONTROL_PIN"),
 };
 
 // Links shown in card headers. PUBLIC_*_URL overrides let you point the
@@ -53,6 +88,12 @@ export const serviceLinks = {
   bookshelf: link("BOOKSHELF", config.bookshelf.url),
   immich: link("IMMICH", config.immich.url),
   tdarr: link("TDARR", config.tdarr.url),
+  homeassistant: link("HA", config.homeassistant.url),
+  qbittorrent: link("QBITTORRENT", config.qbittorrent.url),
+  sabnzbd: link("SABNZBD", config.sabnzbd.url),
+  overseerr: link("OVERSEERR", config.overseerr.url),
+  tautulli: link("TAUTULLI", config.tautulli.url),
+  uptimekuma: link("UPTIME_KUMA", `${config.uptimekuma.url}/status/${config.uptimekuma.slug ?? ""}`),
 };
 
 export const enabled = {
@@ -64,4 +105,10 @@ export const enabled = {
   bookshelf: !!config.bookshelf.apiKey,
   immich: !!config.immich.apiKey,
   tdarr: config.tdarr.enabled,
+  homeassistant: !!config.homeassistant.token,
+  qbittorrent: config.qbittorrent.enabled,
+  sabnzbd: !!config.sabnzbd.apiKey,
+  overseerr: !!config.overseerr.apiKey,
+  tautulli: !!config.tautulli.apiKey,
+  uptimekuma: !!config.uptimekuma.slug,
 };

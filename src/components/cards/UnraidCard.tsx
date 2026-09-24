@@ -1,8 +1,10 @@
 "use client";
 
-import { Box, Clock, HardDrive, Server, Thermometer } from "lucide-react";
+import { BatteryCharging, Bell, Box, Clock, HardDrive, Monitor, Play, Server, ShieldCheck, Square, Thermometer } from "lucide-react";
 import type { UnraidData } from "@/lib/types";
-import { bytes, duration, pct } from "../format";
+import { useAction, useControls } from "../controls";
+import { ago, bytes, duration, pct } from "../format";
+import { TimeChart } from "../TimeChart";
 import { Card, Meter, StatusBadge } from "../ui";
 import { useService } from "../useService";
 
@@ -23,6 +25,11 @@ export function UnraidCard({ href }: { href?: string | null }) {
       meta={
         d ? (
           <>
+            {d.notifications && (d.notifications.alerts || d.notifications.warnings) ? (
+              <StatusBadge level={d.notifications.alerts ? "critical" : "warning"}>
+                {d.notifications.alerts + d.notifications.warnings} alerts
+              </StatusBadge>
+            ) : null}
             {d.array.state ? (
               <StatusBadge level={d.array.state === "STARTED" ? "good" : "warning"}>
                 Array {d.array.state.toLowerCase()}
@@ -61,6 +68,35 @@ export function UnraidCard({ href }: { href?: string | null }) {
             />
           </div>
 
+          {d.history.filter((h) => h.cpu !== null || h.mem !== null).length > 2 ? (
+            <TimeChart
+              label="CPU and memory use over the last hour"
+              series={[
+                { key: "cpu", label: "CPU", values: d.history.map((h) => h.cpu), kind: "area", color: "var(--series-1)" },
+                { key: "mem", label: "Memory", values: d.history.map((h) => h.mem), kind: "line", color: "var(--series-3)" },
+              ]}
+              start={d.history[0].t}
+              stepMs={(d.history[d.history.length - 1].t - d.history[0].t) / Math.max(1, d.history.length - 1)}
+              format={(v) => `${Math.round(v)}%`}
+              fixedMax={100}
+              height={96}
+            />
+          ) : null}
+
+          {d.parity ? (
+            <Meter
+              label={
+                <>
+                  <ShieldCheck size={12} aria-hidden /> {d.parity.action} in progress
+                </>
+              }
+              ratio={d.parity.progress}
+              value={pct(d.parity.progress * 100, 1)}
+              warn={2}
+              crit={2}
+            />
+          ) : null}
+
           <div className="unraid-facts">
             <div className="fact">
               <Clock size={14} aria-hidden />
@@ -74,8 +110,41 @@ export function UnraidCard({ href }: { href?: string | null }) {
                 </span>
               </div>
             ) : null}
+            {d.ups ? (
+              <div className="fact" title={d.ups.name}>
+                <BatteryCharging size={14} aria-hidden />
+                <span>
+                  UPS {d.ups.status?.toLowerCase() ?? ""} · {d.ups.charge !== null ? `${Math.round(d.ups.charge)}%` : "—"}
+                  {d.ups.runtimeSeconds ? ` · ${duration(d.ups.runtimeSeconds)}` : ""}
+                  {d.ups.load !== null ? ` · ${Math.round(d.ups.load)}% load` : ""}
+                </span>
+              </div>
+            ) : null}
+            {d.vms?.length ? (
+              <div className="fact" title={d.vms.map((v) => `${v.name}: ${v.state}`).join("\n")}>
+                <Monitor size={14} aria-hidden />
+                <span>
+                  <strong>{d.vms.filter((v) => v.state === "running").length}</strong>/{d.vms.length} VMs running
+                </span>
+              </div>
+            ) : null}
             {d.version ? <div className="fact muted">Unraid {d.version}</div> : null}
           </div>
+
+          {d.notifications?.latest.length ? (
+            <ul className="notes" aria-label="Unread notifications">
+              {d.notifications.latest.map((n) => (
+                <li key={n.id} className={`note note-${n.importance}`}>
+                  <Bell size={13} aria-hidden />
+                  <span className="note-title">{n.title}</span>
+                  {n.subject ? <span className="note-sub">{n.subject}</span> : null}
+                  {n.timestamp && !Number.isNaN(Date.parse(n.timestamp)) ? (
+                    <span className="note-when">{ago(Date.parse(n.timestamp))}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {d.warnings.length ? (
             <div className="warn-list">
@@ -127,8 +196,46 @@ export function UnraidCard({ href }: { href?: string | null }) {
               })}
             </ul>
           ) : null}
+
+          {d.containers?.list.length ? <Containers list={d.containers.list} refresh={state.refresh} /> : null}
         </div>
       )}
     </Card>
+  );
+}
+
+function Containers({ list, refresh }: { list: NonNullable<UnraidData["containers"]>["list"]; refresh?: () => void }) {
+  const { sensitive } = useControls();
+  const { busy, act } = useAction(refresh);
+  return (
+    <details className="containers">
+      <summary>
+        <Box size={13} aria-hidden /> Containers
+      </summary>
+      <ul>
+        {list.map((c) => (
+          <li key={c.id || c.name} className={c.running ? "is-running" : "is-stopped"}>
+            <i className="status-dot" aria-hidden />
+            <span className="container-name">{c.name}</span>
+            <span className="container-state">{c.running ? "Running" : "Stopped"}</span>
+            {sensitive && c.id ? (
+              <button
+                type="button"
+                className="icon-btn"
+                disabled={busy === c.id}
+                aria-label={`${c.running ? "Stop" : "Start"} ${c.name}`}
+                title={c.running ? "Stop" : "Start"}
+                onClick={() => {
+                  if (c.running && !confirm(`Stop ${c.name}?`)) return;
+                  act(c.id, { service: "unraid", containerId: c.id, action: c.running ? "stop" : "start" });
+                }}
+              >
+                {c.running ? <Square size={13} /> : <Play size={13} />}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
